@@ -11,6 +11,8 @@ DEBUG_FLAGS = -O0 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls
 
 TESTS = unittests1
 
+BIN_DIR = ./bin
+
 GTEST_HEADERS = /usr/include/gtest/*.h \
                 /usr/include/gtest/internal/*.h
 
@@ -37,10 +39,10 @@ unittests1.o: $(USER_DIR)/unittests1.cpp $(USER_DIR)/deque.hpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -c $(USER_DIR)/unittests1.cpp
 
 unittests1: unittests1.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -lpthread $^ -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -lpthread $^ -o $(BIN_DIR)/$@
 
 result:
 	$(CXX) -E deque.hpp -o deque.h
 
 clean:
-	rm -f $(TESTS) gtest.a gtest_main.a *.o
+	rm -f $(BIN_DIR)/* gtest.a gtest_main.a *.o

@@ -50,6 +50,57 @@ namespace
 		deq.push_back(3);
 		deq.push_back(4);
 		deq.push_back(5);
+		Deque<int>::iterator it = deq.begin();
+		for (size_t i = 0; i < deq.size(); ++i, ++it)
+		{
+			EXPECT_EQ(*it, deq[i]);
+		}
+		it = deq.begin();
+		it += 7;
+		EXPECT_EQ(*it, deq[7]);
+		it -= 3;
+		EXPECT_EQ(*it, deq[4]);
+		it += 1;
+		EXPECT_EQ(*it, deq[5]);
+
+		EXPECT_EQ(*(it + -2), deq[3]);
+		EXPECT_EQ(*(it - 3), deq[2]);
+
+		EXPECT_EQ(deq.end() - deq.begin(), deq.size());
+		EXPECT_EQ(deq.rbegin() - deq.rend(), deq.size());
+
+		const Deque<int> cdeq(deq);
+		Deque<int>::const_iterator cit = cdeq.begin();
+		for (size_t i = 0; i < deq.size(); ++i, ++cit)
+		{
+			EXPECT_EQ(*cit, cdeq[i]);
+		}
+		cit = cdeq.begin();
+		cit += 7;
+		EXPECT_EQ(*cit, cdeq[7]);
+		cit -= 3;
+		EXPECT_EQ(*cit, cdeq[4]);
+		cit += 1;
+		EXPECT_EQ(*cit, cdeq[5]);
+
+		EXPECT_EQ(*(cit + -2), cdeq[3]);
+		EXPECT_EQ(*(cit - 3), cdeq[2]);	
+
+		EXPECT_EQ(cdeq.cend() - cdeq.cbegin(), cdeq.size());
+		EXPECT_EQ(cdeq.crbegin() - cdeq.crend(), cdeq.size());
+	}
+
+	TEST(MainTestCase, PairIteratorTest)
+	{
+		Deque<std::pair<int, int>> deq;
+		deq.push_back(std::make_pair(0, 1));
+		deq.push_back(std::make_pair(2, 3));
+		deq.push_back(std::make_pair(4, 5));
+		deq.push_back(std::make_pair(6, 7));
+		deq.push_back(std::make_pair(8, 9));
+		Deque<std::pair<int, int>>::iterator it = deq.begin();
+		EXPECT_EQ((it + 1)->second, deq[1].second);
+		EXPECT_EQ((it + 4)->second, deq[4].second);
 	}
 
 	template<typename T>

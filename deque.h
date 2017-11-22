@@ -6,10 +6,6 @@
 
 #pragma once
 
-
-/////////////////////// deque.hpp //////////////////////////
-
-
 template<class TContainer, class TIterator>
 class _iterator_base;
 template<class TContainer>
@@ -22,9 +18,13 @@ class Deque
 {
 public:
 	using size_type = std::size_t;
+	using dist_type = std::ptrdiff_t;
+
 	using value_type = T;
 	using reference = value_type&;
 	using const_reference = const value_type&;
+	using pointer = value_type*;
+	using const_pointer = const value_type*;
 
 	using iterator = _iterator<Deque<T>>;
 	using const_iterator = _const_iterator<Deque<T>>;
@@ -59,15 +59,19 @@ public:
 	const_reference front() const;
 
 	iterator begin();
+	const_iterator begin() const;
 	const_iterator cbegin() const;
 
 	iterator end();
+	const_iterator end() const;
 	const_iterator cend() const;
 
 	reverse_iterator rbegin();
+	const_reverse_iterator rbegin() const;
 	const_reverse_iterator crbegin() const;
 
 	reverse_iterator rend();
+	const_reverse_iterator rend() const;
 	const_reverse_iterator crend() const;
 
 	~Deque();
@@ -85,53 +89,94 @@ private:
 	static const std::size_t DEFAULT_SIZE = 1;
 };
 
+
+
+
+////////// ITERATORS //////////
+
+
+template<class TContainer, class TIterator>
+TIterator operator+(const _iterator_base<TContainer, TIterator>&, 
+	typename TContainer::dist_type);
+
+template<class TContainer, class TIterator>
+TIterator operator+(typename TContainer::dist_type,
+	const _iterator_base<TContainer, TIterator>&);
+
+template<class TContainer, class TIterator>
+TIterator operator-(const _iterator_base<TContainer, TIterator>&, 
+	typename TContainer::dist_type);
+
 template<class TContainer, class TIterator>
 class _iterator_base
 {
 public:
-	_iterator_base(TContainer*, typename TContainer::size_type);
+	_iterator_base(const _iterator_base<TContainer, TIterator>&) = default;
 
 	TIterator& operator++();
 	TIterator operator++(int);
 	TIterator& operator--();
 	TIterator operator--(int);
 
+	//can't really use the proper TIterator::difference_type cuz of dependent base class
+	TIterator& operator+=(typename TContainer::dist_type);
+	TIterator& operator-=(typename TContainer::dist_type);
+
+	friend TIterator operator+<>(const _iterator_base<TContainer, TIterator>&, 
+		typename TContainer::dist_type);
+	friend TIterator operator+<>(typename TContainer::dist_type,
+		const _iterator_base<TContainer, TIterator>&);
+	friend TIterator operator-<>(const _iterator_base<TContainer, TIterator>&, 
+		typename TContainer::dist_type);
+
 	bool operator==(const TIterator&) const;
 	bool operator!=(const TIterator&) const;
 
+	_iterator_base& operator=(const _iterator_base&) = default;
+
 protected:
-	TContainer* _container;
+	_iterator_base(typename TContainer::size_type);
+	TIterator* _to_derived();
+	const TIterator* _to_derived() const;
+
 	typename TContainer::size_type _position;
 };
+
 
 template<class TContainer>
 class _iterator 
 	: public std::iterator<std::random_access_iterator_tag, typename TContainer::value_type, 
-		typename TContainer::size_type, typename TContainer::pointer, typename TContainer::reference>, 
+		typename TContainer::dist_type, typename TContainer::pointer, typename TContainer::reference>, 
 		public _iterator_base<TContainer, _iterator<TContainer>>
 {
 public:
 	_iterator(TContainer*, typename TContainer::size_type);
+	_iterator(const _iterator<TContainer>&) = default;
 
+	_iterator& operator=(const _iterator&) = default;
 	typename TContainer::reference operator*();
+
+private:
+	TContainer* _container;
 };
 
 template<class TContainer>
 class _const_iterator
 	: public std::iterator<std::random_access_iterator_tag, typename TContainer::value_type, 
-		typename TContainer::size_type, typename TContainer::const_pointer, typename TContainer::const_reference>, 
+		typename TContainer::dist_type, typename TContainer::const_pointer, typename TContainer::const_reference>, 
 		public _iterator_base<TContainer, _const_iterator<TContainer>>
 {
 public:
-	_const_iterator(TContainer*, typename TContainer::size_type);
+	_const_iterator(const TContainer*, typename TContainer::size_type);
+	_const_iterator(const _iterator<TContainer>&);
+	_const_iterator(const _const_iterator<TContainer>&) = default;
 
+	_const_iterator& operator=(const _const_iterator&) = default;
 	typename TContainer::const_reference operator*() const;
+
+private:
+	const TContainer* _container;
 };
-
-
-
-/////////////////////// deque.tpp //////////////////////////
-
 
 
 template<typename T>
@@ -278,6 +323,12 @@ typename Deque<T>::iterator Deque<T>::begin()
 }
 
 template<typename T>
+typename Deque<T>::const_iterator Deque<T>::begin() const
+{
+	return Deque<T>::const_iterator(this, 0);
+}
+
+template<typename T>
 typename Deque<T>::const_iterator Deque<T>::cbegin() const
 {
 	return Deque<T>::const_iterator(this, 0);
@@ -287,6 +338,12 @@ template<typename T>
 typename Deque<T>::iterator Deque<T>::end()
 {
 	return Deque<T>::iterator(this, _size);
+}
+
+template<typename T>
+typename Deque<T>::const_iterator Deque<T>::end() const
+{
+	return Deque<T>::const_iterator(this, _size);
 }
 
 template<typename T>
@@ -304,6 +361,13 @@ typename Deque<T>::reverse_iterator Deque<T>::rbegin()
 }
 
 template<typename T>
+typename Deque<T>::const_reverse_iterator Deque<T>::rbegin() const
+{
+	return 
+		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, 0));
+}
+
+template<typename T>
 typename Deque<T>::const_reverse_iterator Deque<T>::crbegin() const
 {
 	return 
@@ -315,6 +379,13 @@ typename Deque<T>::reverse_iterator Deque<T>::rend()
 {
 	return 
 		std::reverse_iterator<Deque<T>::iterator>(Deque<T>::iterator(this, _size));
+}
+
+template<typename T>
+typename Deque<T>::const_reverse_iterator Deque<T>::rend() const
+{
+	return 
+		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, _size));
 }
 
 template<typename T>
@@ -363,9 +434,8 @@ void Deque<T>::_resize(Deque<T>::size_type capacity)
 
 
 template<class TContainer, class TIterator>
-_iterator_base<TContainer, TIterator>::_iterator_base(TContainer* container, 
-	typename TContainer::size_type position)
-	: _container(container), _position(position)
+_iterator_base<TContainer, TIterator>::_iterator_base(typename TContainer::size_type position)
+	: _position(position)
 {
 
 }
@@ -374,13 +444,13 @@ template<class TContainer, class TIterator>
 TIterator& _iterator_base<TContainer, TIterator>::operator++()
 {
 	_position++;
-	return dynamic_cast<TIterator>(*this);
+	return *_to_derived();
 }
 
 template<class TContainer, class TIterator>
 TIterator _iterator_base<TContainer, TIterator>::operator++(int)
 {
-	TIterator copy = dynamic_cast<TIterator>(*this);
+	TIterator copy = *_to_derived();
 	_position++;
 	return copy;
 }
@@ -389,15 +459,29 @@ template<class TContainer, class TIterator>
 TIterator& _iterator_base<TContainer, TIterator>::operator--()
 {
 	_position--;
-	return dynamic_cast<TIterator>(*this);
+	return *_to_derived();
 }
 
 template<class TContainer, class TIterator>
 TIterator _iterator_base<TContainer, TIterator>::operator--(int)
 {
-	TIterator copy = dynamic_cast<TIterator>(*this);
+	TIterator copy = *_to_derived();
 	_position--;
 	return copy;
+}
+
+template<class TContainer, class TIterator>
+TIterator& _iterator_base<TContainer, TIterator>::operator+=(typename TContainer::dist_type dist)
+{
+	_position += dist;
+	return *_to_derived();
+}
+
+template<class TContainer, class TIterator>
+TIterator& _iterator_base<TContainer, TIterator>::operator-=(typename TContainer::dist_type dist)
+{
+	_position -= dist;
+	return *_to_derived();
 }
 
 template<class TContainer, class TIterator>
@@ -414,10 +498,48 @@ bool _iterator_base<TContainer, TIterator>::operator!=(const TIterator& other) c
 	return !operator==(other);
 }
 
+template<class TContainer, class TIterator>
+TIterator operator+(const _iterator_base<TContainer, TIterator>& iter, 
+	typename TContainer::dist_type dist)
+{
+	TIterator copy = *iter._to_derived();
+	copy += dist;
+	return copy;
+}
+
+template<class TContainer, class TIterator>
+TIterator operator+(typename TContainer::dist_type dist,
+	const _iterator_base<TContainer, TIterator>& iter)
+{
+	return iter + dist;
+}
+
+template<class TContainer, class TIterator>
+TIterator operator-(const _iterator_base<TContainer, TIterator>& iter, 
+	typename TContainer::dist_type dist)
+{
+	TIterator copy = *iter._to_derived();
+	copy -= dist;
+	return copy;
+}
+
+template<class TContainer, class TIterator>
+TIterator* _iterator_base<TContainer, TIterator>::_to_derived()
+{
+	return static_cast<TIterator*>(this);
+}
+
+template<class TContainer, class TIterator>
+const TIterator* _iterator_base<TContainer, TIterator>::_to_derived() const
+{
+	return static_cast<const TIterator*>(this);
+}
+
 template<class TContainer>
 _iterator<TContainer>::_iterator(TContainer* container, 
 	typename TContainer::size_type position)
-	: _iterator_base<TContainer, _iterator<TContainer>>(container, position)
+	: _iterator_base<TContainer, _iterator<TContainer>>(position),
+	_container(container)
 {
 
 }
@@ -426,13 +548,21 @@ template<class TContainer>
 typename TContainer::reference _iterator<TContainer>::operator*()
 {
 	//doesn't compile without "this". Weird.
-	return this->_container[this->_position];
+	return this->_container->operator[](this->_position);
 }
 
 template<class TContainer>
-_const_iterator<TContainer>::_const_iterator(TContainer* container, 
+_const_iterator<TContainer>::_const_iterator(const TContainer* container, 
 	typename TContainer::size_type position)
-	: _iterator_base<TContainer, _iterator<TContainer>>(container, position)
+	: _iterator_base<TContainer, _const_iterator<TContainer>>(position),
+	_container(container)
+{
+
+}
+
+template<class TContainer>
+_const_iterator<TContainer>::_const_iterator(const _iterator<TContainer>& other)
+	: _iterator_base<TContainer, _const_iterator<TContainer>>(other)
 {
 
 }
@@ -440,5 +570,5 @@ _const_iterator<TContainer>::_const_iterator(TContainer* container,
 template<class TContainer>
 typename TContainer::const_reference _const_iterator<TContainer>::operator*() const
 {
-	return this->_container[this->_position];
+	return this->_container->operator[](this->_position);
 }
