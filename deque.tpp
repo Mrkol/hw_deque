@@ -176,42 +176,42 @@ template<typename T>
 typename Deque<T>::reverse_iterator Deque<T>::rbegin()
 {
 	return 
-		std::reverse_iterator<Deque<T>::iterator>(Deque<T>::iterator(this, 0));
+		std::reverse_iterator<Deque<T>::iterator>(Deque<T>::iterator(this, _size));
 }
 
 template<typename T>
 typename Deque<T>::const_reverse_iterator Deque<T>::rbegin() const
 {
 	return 
-		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, 0));
+		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, _size));
 }
 
 template<typename T>
 typename Deque<T>::const_reverse_iterator Deque<T>::crbegin() const
 {
 	return 
-		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, 0));
+		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, _size));
 }
 
 template<typename T>
 typename Deque<T>::reverse_iterator Deque<T>::rend()
 {
 	return 
-		std::reverse_iterator<Deque<T>::iterator>(Deque<T>::iterator(this, _size));
+		std::reverse_iterator<Deque<T>::iterator>(Deque<T>::iterator(this, 0));
 }
 
 template<typename T>
 typename Deque<T>::const_reverse_iterator Deque<T>::rend() const
 {
 	return 
-		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, _size));
+		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, 0));
 }
 
 template<typename T>
 typename Deque<T>::const_reverse_iterator Deque<T>::crend() const
 {
 	return 
-		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, _size));
+		std::reverse_iterator<Deque<T>::const_iterator>(Deque<T>::const_iterator(this, 0));
 }
 
 template<typename T>

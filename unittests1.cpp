@@ -64,10 +64,20 @@ namespace
 		EXPECT_EQ(*it, deq[5]);
 
 		EXPECT_EQ(*(it + -2), deq[3]);
+		EXPECT_EQ(*(2 + it), deq[7]);
 		EXPECT_EQ(*(it - 3), deq[2]);
 
 		EXPECT_EQ(deq.end() - deq.begin(), deq.size());
-		EXPECT_EQ(deq.rbegin() - deq.rend(), deq.size());
+		EXPECT_EQ(deq.rend() - deq.rbegin(), deq.size());
+
+		int ind = 0;
+		for (auto& el : deq) EXPECT_EQ(el, deq[ind++]);
+
+		Deque<int>::reverse_iterator rit = deq.rbegin();
+		for (size_t i = deq.size() - 1; rit != deq.rend(); --i, ++rit)
+		{
+			EXPECT_EQ(*rit, deq[i]);
+		}
 
 		const Deque<int> cdeq(deq);
 		Deque<int>::const_iterator cit = cdeq.begin();
@@ -84,10 +94,11 @@ namespace
 		EXPECT_EQ(*cit, cdeq[5]);
 
 		EXPECT_EQ(*(cit + -2), cdeq[3]);
+		EXPECT_EQ(*(2 + cit), cdeq[7]);
 		EXPECT_EQ(*(cit - 3), cdeq[2]);	
 
 		EXPECT_EQ(cdeq.cend() - cdeq.cbegin(), cdeq.size());
-		EXPECT_EQ(cdeq.crbegin() - cdeq.crend(), cdeq.size());
+		EXPECT_EQ(cdeq.crend() - cdeq.crbegin(), cdeq.size());
 	}
 
 	TEST(MainTestCase, PairIteratorTest)
