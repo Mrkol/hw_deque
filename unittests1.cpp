@@ -147,7 +147,7 @@ namespace
 	
 	TEST(MainTestCase, RandomizedDequeTest)
 	{
-		const size_t COUNT = 1000;
+		const size_t COUNT = 10000;
 		const int RANGE = 10000;
 
 		Deque<short> deq;

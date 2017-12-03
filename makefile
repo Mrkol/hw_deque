@@ -5,44 +5,64 @@ GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 CXX = clang++
 
 CXXFLAGS += -Wall -Wextra -std=c++14 -pthread
-CPPFLAGS += -isystem $(GTEST_DIR)/include
+GTESTFLAGS += -isystem $(GTEST_DIR)/include
 
 DEBUG_FLAGS = -O0 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls
-
-TESTS = unittests1
+RELEASE_FLAGS = -O3
 
 BIN_DIR = ./bin
+OBJ_DIR = ./obj
+PROF_DIR = ./profiling
 
 GTEST_HEADERS = /usr/include/gtest/*.h \
                 /usr/include/gtest/internal/*.h
 
 gtest-all.o : $(GTEST_SRCS_)
-	$(CXX) $(CPPFLAGS) $(DEBUG_FLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc
+	$(CXX) $(CPPFLAGS) $(DEBUG_FLAGS) -I$(GTEST_DIR) $(CXXFLAGS) \
+		-c $(GTEST_DIR)/src/gtest-all.cc -o $(OBJ_DIR)/$@
 
 gtest_main.o : $(GTEST_SRCS_)
-	$(CXX) $(CPPFLAGS) $(DEBUG_FLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest_main.cc
+	$(CXX) $(CPPFLAGS) $(DEBUG_FLAGS) -I$(GTEST_DIR) $(CXXFLAGS) \
+		-c $(GTEST_DIR)/src/gtest_main.cc -o $(OBJ_DIR)/$@
 
 gtest.a : gtest-all.o
-	$(AR) $(ARFLAGS) $@ $^
+	$(AR) $(ARFLAGS) $(OBJ_DIR)/$@ $(^:%=$(OBJ_DIR)/%)
 
 gtest_main.a : gtest-all.o gtest_main.o
-	$(AR) $(ARFLAGS) $@ $^
-
+	$(AR) $(ARFLAGS) $(OBJ_DIR)/$@ $(^:%=$(OBJ_DIR)/%)
 
 #################
 
-all_tests: $(TESTS)
+all_tests: dirs unittests1 stresstest
 
 unittests1.o: $(USER_DIR)/unittests1.cpp $(USER_DIR)/deque.hpp $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -c $(USER_DIR)/unittests1.cpp
+	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) \
+		-c $< -o $(OBJ_DIR)/$@
 
 unittests1: unittests1.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -lpthread $^ -o $(BIN_DIR)/$@
+	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -lpthread \
+		$(^:%=$(OBJ_DIR)/%) -o $(BIN_DIR)/$@
 
-result:
-	$(CXX) -E deque.hpp -o deque.h
+stresstest.o: $(USER_DIR)/stresstest.cpp $(USER_DIR)/deque.hpp
+	$(CXX) $(CXXFLAGS) $(RELEASE_FLAGS) \
+		-c $< -o $(OBJ_DIR)/$@
+
+stresstest: stresstest.o
+	$(CXX) $(CXXFLAGS) $(RELEASE_FLAGS) \
+		$(^:%=$(OBJ_DIR)/%) -o $(BIN_DIR)/$@
+
+profile: dirs stresstest
+	cd $(PROF_DIR);\
+	valgrind --tool=callgrind ./../$(BIN_DIR)/stresstest
+
+yacontest:
+	head -n -2 deque.hpp > deque.h
+	cat deque.tpp >> deque.h 
+
+dirs:
+	mkdir -p $(OBJ_DIR)
+	mkdir -p $(BIN_DIR)
+	mkdir -p $(PROF_DIR)
 
 clean:
-	rm -f $(BIN_DIR)/* gtest.a gtest_main.a *.o
+	rm -f $(BIN_DIR)/* $(OBJ_DIR)/*

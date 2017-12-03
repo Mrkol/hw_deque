@@ -55,13 +55,17 @@ void Deque<T>::reserve(typename Deque<T>::size_type amount)
 template<typename T>
 typename Deque<T>::reference Deque<T>::operator[](Deque<T>::size_type index)
 {
-	return _impl[(_start + index) % _capacity];
+	Deque<T>::size_type tmp = _start + index;
+	if (tmp >= _capacity) tmp -= _capacity;
+	return _impl[tmp];
 }
 
 template<typename T>
 typename Deque<T>::const_reference Deque<T>::operator[](Deque<T>::size_type index) const
 {
-	return _impl[(_start + index) % _capacity];
+	Deque<T>::size_type tmp = _start + index;
+	if (tmp >= _capacity) tmp -= _capacity;
+	return _impl[tmp];
 }
 
 template<typename T>
@@ -78,7 +82,7 @@ Deque<T>& Deque<T>::operator=(const Deque<T>& other)
 template<typename T>
 void Deque<T>::push_back(Deque<T>::const_reference value)
 {
-	_impl[(_start + _size)%_capacity] = value;
+	operator[](_size) = value;
 	++_size;
 	_normalize();
 }
@@ -106,7 +110,7 @@ void Deque<T>::pop_front()
 {
 	//behaviour on empty containers is undefined, just as it is in STL
 	++_start;
-	_start %= _capacity;
+	if (_start >= _capacity) _start = 0;
 	--_size;
 	_normalize();
 }
@@ -114,13 +118,13 @@ void Deque<T>::pop_front()
 template<typename T>
 typename Deque<T>::reference Deque<T>::back()
 {
-	return _impl[(_start + _size - 1) % _capacity];
+	return operator[](_size - 1);
 }
 
 template<typename T>
 typename Deque<T>::const_reference Deque<T>::back() const
 {
-	return _impl[(_start + _size - 1) % _capacity];
+	return operator[](_size - 1);
 }
 
 template<typename T>
@@ -224,8 +228,8 @@ template<typename T>
 void Deque<T>::_normalize()
 {
 	//poential place for optimizations and bugs
-	if (RESIZE_COEFF*RESIZE_COEFF*_size <= _capacity) _resize(RESIZE_COEFF*_size);
-	else if (_size >= _capacity) _resize(RESIZE_COEFF*_capacity);
+	if (_size >= _capacity) _resize(RESIZE_COEFF*_capacity);
+	else if (RESIZE_COEFF*RESIZE_COEFF*_size <= _capacity) _resize(RESIZE_COEFF*_size);
 }
 
 template<typename T>

@@ -85,8 +85,8 @@ private:
 	std::size_t _size;
 	std::size_t _start;
 
-	static const std::size_t RESIZE_COEFF = 2;
-	static const std::size_t DEFAULT_SIZE = 1;
+	static const std::size_t RESIZE_COEFF = 3;
+	static const std::size_t DEFAULT_SIZE = 8;
 };
 
 
@@ -185,5 +185,6 @@ public:
 private:
 	const TContainer* _container;
 };
+
 
 #include "deque.tpp"
