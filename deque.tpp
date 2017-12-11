@@ -1,20 +1,17 @@
+#include "deque.hpp"
+
 template<typename T>
 Deque<T>::Deque()
+	: _impl(new T[DEFAULT_SIZE]), _capacity(DEFAULT_SIZE), _size(0), _start(0)
 {
-	_capacity = DEFAULT_SIZE;
-	_impl = new T[_capacity];
-	_size = 0;
-	_start = 0;
+
 }
 
 template<typename T>
 Deque<T>::Deque(const Deque<T>& other)
+	: _impl(new T[other._capacity]), _capacity(other._capacity), _size(other._size), _start(other._start)
 {
-	_capacity = other._capacity;
-	_impl = new T[_capacity];
 	std::memcpy(_impl, other._impl, _capacity*sizeof(T));
-	_size = other._size;
-	_start = other._start;
 }
 
 template<typename T>
@@ -38,7 +35,9 @@ typename Deque<T>::size_type Deque<T>::capacity() const
 template<typename T>
 void Deque<T>::clear()
 {
-	if (_impl != nullptr) delete[] _impl;
+	if (_impl != nullptr) 
+		delete[] _impl;
+
 	_capacity = DEFAULT_SIZE;
 	_impl = new T[_capacity];
 	_size = 0;
@@ -48,31 +47,38 @@ void Deque<T>::clear()
 template<typename T>
 void Deque<T>::reserve(typename Deque<T>::size_type amount)
 {
-	if (amount <= _capacity) return;
+	if (amount <= _capacity) 
+		return;
+
 	_resize(amount);
 }
 
 template<typename T>
-typename Deque<T>::reference Deque<T>::operator[](Deque<T>::size_type index)
+typename Deque<T>::reference Deque<T>::operator[](Deque<T>::difference_type index)
 {
 	Deque<T>::size_type tmp = _start + index;
-	if (tmp >= _capacity) tmp -= _capacity;
+	if (tmp >= _capacity)
+		tmp -= _capacity;
 	return _impl[tmp];
 }
 
 template<typename T>
-typename Deque<T>::const_reference Deque<T>::operator[](Deque<T>::size_type index) const
+typename Deque<T>::const_reference Deque<T>::operator[](Deque<T>::difference_type index) const
 {
 	Deque<T>::size_type tmp = _start + index;
-	if (tmp >= _capacity) tmp -= _capacity;
+	if (tmp >= _capacity) 
+		tmp -= _capacity;
 	return _impl[tmp];
 }
 
 template<typename T>
 Deque<T>& Deque<T>::operator=(const Deque<T>& other)
 {
+	if (this == &other) 
+		return *this;
 	_capacity = other._capacity;
-	if (_impl != nullptr) delete[] _impl;
+	if (_impl != nullptr) 
+		delete[] _impl;
 	_impl = new T[_capacity];
 	std::memcpy(_impl, other._impl, _capacity*sizeof(T));
 	_size = other._size;
@@ -98,8 +104,11 @@ void Deque<T>::pop_back()
 template<typename T>
 void Deque<T>::push_front(Deque<T>::const_reference value)
 {
-	if (_start == 0) _start = _capacity - 1;
-	else _start--;
+	if (_start == 0) 
+		_start = _capacity - 1;
+	else 
+		_start--;
+
 	++_size;
 	_impl[_start] = value;
 	_normalize();
@@ -228,14 +237,18 @@ template<typename T>
 void Deque<T>::_normalize()
 {
 	//poential place for optimizations and bugs
-	if (_size >= _capacity) _resize(RESIZE_COEFF*_capacity);
-	else if (RESIZE_COEFF*RESIZE_COEFF*_size <= _capacity) _resize(RESIZE_COEFF*_size);
+	if (_size >= _capacity) 
+		_resize(RESIZE_COEFF*_capacity);
+	else if (RESIZE_COEFF*RESIZE_COEFF*_size <= _capacity) 
+		_resize(RESIZE_COEFF*_size);
 }
 
 template<typename T>
 void Deque<T>::_resize(Deque<T>::size_type capacity)
 {
-	if (capacity < DEFAULT_SIZE) capacity = DEFAULT_SIZE;
+	if (capacity < DEFAULT_SIZE) 
+		capacity = DEFAULT_SIZE;
+	
 	//if capacity < _size, behaviour is undefined
 	T* tmp = new T[capacity];
 	if (_size <= _capacity - _start)
@@ -255,162 +268,128 @@ void Deque<T>::_resize(Deque<T>::size_type capacity)
 	delete[] tmp;
 }
 
+// ==================== ITERATORS =======================
 
-template<class TContainer, class TIterator>
-_iterator_base<TContainer, TIterator>::_iterator_base(typename TContainer::size_type position)
-	: _position(position)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr>::_iterator_base(TContainerPtr ptr, difference_type position)
+	: _position(position), _container(ptr)
 {
 
 }
 
-template<class TContainer, class TIterator>
-TIterator& _iterator_base<TContainer, TIterator>::operator++()
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr>& _iterator_base<TContainerPtr>::operator++()
 {
 	_position++;
-	return *_to_derived();
+	return *this;
 }
 
-template<class TContainer, class TIterator>
-TIterator _iterator_base<TContainer, TIterator>::operator++(int)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr> _iterator_base<TContainerPtr>::operator++(int)
 {
-	TIterator copy = *_to_derived();
+	own_type copy = *this;
 	_position++;
 	return copy;
 }
 
-template<class TContainer, class TIterator>
-TIterator& _iterator_base<TContainer, TIterator>::operator--()
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr>& _iterator_base<TContainerPtr>::operator--()
 {
 	_position--;
-	return *_to_derived();
+	return *this;
 }
 
-template<class TContainer, class TIterator>
-TIterator _iterator_base<TContainer, TIterator>::operator--(int)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr> _iterator_base<TContainerPtr>::operator--(int)
 {
-	TIterator copy = *_to_derived();
+	own_type copy = *this;
 	_position--;
 	return copy;
 }
 
-template<class TContainer, class TIterator>
-TIterator& _iterator_base<TContainer, TIterator>::operator+=(typename TContainer::dist_type dist)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr>& _iterator_base<TContainerPtr>::operator+=(difference_type dist)
 {
 	_position += dist;
-	return *_to_derived();
+	return *this;
 }
 
-template<class TContainer, class TIterator>
-TIterator& _iterator_base<TContainer, TIterator>::operator-=(typename TContainer::dist_type dist)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr>& _iterator_base<TContainerPtr>::operator-=(difference_type dist)
 {
 	_position -= dist;
-	return *_to_derived();
+	return *this;
 }
 
-template<class TContainer, class TIterator>
-bool _iterator_base<TContainer, TIterator>::operator==(const TIterator& other) const
+template<typename TContainerPtr>
+bool _iterator_base<TContainerPtr>::operator==(const own_type& other) const
 {
 	//lots of stuff can go wrong here, 
 	//but it's an undefined behavior in stl too, so why should I care?
 	return _position == other._position;
 }
 
-template<class TContainer, class TIterator>
-bool _iterator_base<TContainer, TIterator>::operator!=(const TIterator& other) const
+template<typename TContainerPtr>
+bool _iterator_base<TContainerPtr>::operator!=(const own_type& other) const
 {
 	return !operator==(other);
 }
 
-template<class TContainer, class TIterator>
-TIterator operator+(const _iterator_base<TContainer, TIterator>& iter, 
-	typename TContainer::dist_type dist)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr> operator+(
+	const _iterator_base<TContainerPtr>& iter, 
+	typename std::iterator_traits<_iterator_base<TContainerPtr>>::difference_type dist)
 {
-	TIterator copy = *iter._to_derived();
+	_iterator_base<TContainerPtr> copy = iter;
 	copy += dist;
 	return copy;
 }
 
-template<class TContainer, class TIterator>
-TIterator operator+(typename TContainer::dist_type dist,
-	const _iterator_base<TContainer, TIterator>& iter)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr> operator+(
+	typename std::iterator_traits<_iterator_base<TContainerPtr>>::difference_type dist,
+	const _iterator_base<TContainerPtr>& iter)
 {
 	return iter + dist;
 }
 
-template<class TContainer, class TIterator>
-TIterator operator-(const _iterator_base<TContainer, TIterator>& iter, 
-	typename TContainer::dist_type dist)
+template<typename TContainerPtr>
+_iterator_base<TContainerPtr> operator-(
+	const _iterator_base<TContainerPtr>& iter, 
+	typename std::iterator_traits<_iterator_base<TContainerPtr>>::difference_type dist)
 {
-	TIterator copy = *iter._to_derived();
+	_iterator_base<TContainerPtr> copy = iter;
 	copy -= dist;
 	return copy;
 }
 
-template<class TContainer, class TIterator>
-typename TContainer::dist_type operator-(const _iterator_base<TContainer, TIterator>& first, 
-	const _iterator_base<TContainer, TIterator>& second)
+template<typename TContainerPtr>
+typename std::iterator_traits<_iterator_base<TContainerPtr>>::difference_type 
+	operator-(
+		const _iterator_base<TContainerPtr>& first, 
+		const _iterator_base<TContainerPtr>& second)
 {
 	return first._position - second._position;
 }
 
-template<class TContainer, class TIterator>
-TIterator* _iterator_base<TContainer, TIterator>::_to_derived()
+template<typename TContainerPtr>
+bool operator<(
+	const _iterator_base<TContainerPtr>& first,
+	const _iterator_base<TContainerPtr>& second)
 {
-	return static_cast<TIterator*>(this);
+	return first - second < 0;
 }
 
-template<class TContainer, class TIterator>
-const TIterator* _iterator_base<TContainer, TIterator>::_to_derived() const
+template<typename TContainerPtr>
+typename std::iterator_traits<_iterator_base<TContainerPtr>>::reference 
+	_iterator_base<TContainerPtr>::operator*()
 {
-	return static_cast<const TIterator*>(this);
+	return _container->operator[](_position);
 }
 
-template<class TContainer>
-_iterator<TContainer>::_iterator(TContainer* container, 
-	typename TContainer::size_type position)
-	: _iterator_base<TContainer, _iterator<TContainer>>(position),
-	_container(container)
+template<class TContainerPtr>
+typename std::iterator_traits<_iterator_base<TContainerPtr>>::pointer 
+	_iterator_base<TContainerPtr>::operator->()
 {
-
-}
-
-template<class TContainer>
-typename TContainer::reference _iterator<TContainer>::operator*()
-{
-	//doesn't compile without "this". Weird.
-	return this->_container->operator[](this->_position);
-}
-
-template<class TContainer>
-typename TContainer::pointer _iterator<TContainer>::operator->()
-{
-	return &(this->_container->operator[](this->_position));
-}
-
-template<class TContainer>
-_const_iterator<TContainer>::_const_iterator(const TContainer* container, 
-	typename TContainer::size_type position)
-	: _iterator_base<TContainer, _const_iterator<TContainer>>(position),
-	_container(container)
-{
-
-}
-
-template<class TContainer>
-_const_iterator<TContainer>::_const_iterator(const _iterator<TContainer>& other)
-	: _iterator_base<TContainer, _const_iterator<TContainer>>(other)
-{
-
-}
-
-template<class TContainer>
-typename TContainer::const_reference _const_iterator<TContainer>::operator*() const
-{
-	return this->_container->operator[](this->_position);
-}
-
-template<class TContainer>
-typename TContainer::const_pointer _const_iterator<TContainer>::operator->() const
-{
-	return &(this->_container->operator[](this->_position));
+	return &(_container->operator[](_position));
 }

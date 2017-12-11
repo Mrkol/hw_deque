@@ -4,8 +4,8 @@ GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
 CXX = clang++
 
-CXXFLAGS += -Wall -Wextra -std=c++14 -pthread
-GTESTFLAGS += -isystem $(GTEST_DIR)/include
+CXXFLAGS += -Wall -Wextra -std=c++14
+GTESTFLAGS += -isystem $(GTEST_DIR)/include -pthread
 
 DEBUG_FLAGS = -O0 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls
 RELEASE_FLAGS = -O3
@@ -16,6 +16,8 @@ PROF_DIR = ./profiling
 
 GTEST_HEADERS = /usr/include/gtest/*.h \
                 /usr/include/gtest/internal/*.h
+
+all: all_tests
 
 gtest-all.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) $(DEBUG_FLAGS) -I$(GTEST_DIR) $(CXXFLAGS) \
@@ -56,8 +58,9 @@ profile: dirs stresstest
 	valgrind --tool=callgrind ./../$(BIN_DIR)/stresstest
 
 yacontest:
-	head -n -2 deque.hpp > deque.h
-	cat deque.tpp >> deque.h 
+	head -n -3 deque.hpp > deque.h
+	tail -n +2 deque.tpp >> deque.h
+	tail -n 2 deque.hpp >> deque.h
 
 dirs:
 	mkdir -p $(OBJ_DIR)

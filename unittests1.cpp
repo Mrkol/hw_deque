@@ -1,11 +1,50 @@
+#include <deque>
+#include <algorithm>
+#include <random>
 #include "gtest/gtest.h"
 #include "deque.hpp"
-#include <deque>
-#include <random>
 
 
 namespace 
 {
+	enum OpType
+	{
+		PushBack,
+		PushFront,
+		PopBack,
+		PopFront,
+		IndexSet
+	};
+
+	template<class TDeque1, class TDeque2>
+	::testing::AssertionResult MatchOracle(const TDeque1& deq, const TDeque2& oracle)
+	{
+		bool success = true;
+		success &= deq.size() == oracle.size();
+		success &= deq.empty() == oracle.empty();
+		if (!oracle.empty()) success &= deq.front() == oracle.front();
+		if (!oracle.empty()) success &= deq.back() == oracle.back();
+
+		for (size_t i = 0; i < oracle.size(); ++i)
+		{
+			success &= deq[i] == oracle[i];
+		}
+
+		if (success) return ::testing::AssertionSuccess();
+
+		::testing::AssertionResult res = ::testing::AssertionFailure();
+
+		res << std::endl << "Oracle looks like this:" << std::endl;
+		for (size_t i = 0; i < oracle.size(); ++i) res << oracle[i] << " ";
+		res << "(" << oracle.size() << ")" << std::endl;
+
+		res << "But he deque looks like this:" << std::endl;
+		for (size_t i = 0; i < deq.size(); ++i) res << deq[i] << " ";
+		res << "(" << deq.size() << ")" << std::endl;
+
+		return res;
+	}
+
 	TEST(MainTestCase, ManualDequeTest)
 	{
 		Deque<int> deq;
@@ -114,40 +153,52 @@ namespace
 		EXPECT_EQ((it + 4)->second, deq[4].second);
 	}
 
-	template<typename T>
-	::testing::AssertionResult MatchOracle(const Deque<T>& deq, const std::deque<T>& oracle)
+	TEST(MainTestCase, StlIteratorTest)
 	{
-		bool success = true;
-		success &= deq.size() == oracle.size();
-		success &= deq.empty() == oracle.empty();
-		if (!oracle.empty()) success &= deq.front() == oracle.front();
-		if (!oracle.empty()) success &= deq.back() == oracle.back();
+		Deque<int> deq1;
+		Deque<int> deq2;
 
-		for (size_t i = 0; i < oracle.size(); ++i)
+		for (int i = 0; i < 1000000; ++i)
 		{
-			success &= deq[i] == oracle[i];
+			deq1.push_back(i);
+			deq2.push_back(i);
 		}
 
-		if (success) return ::testing::AssertionSuccess();
+		std::random_shuffle(deq1.begin(), deq1.end());
+		std::sort(deq1.begin(), deq1.end());
 
-		::testing::AssertionResult res = ::testing::AssertionFailure();
+		ASSERT_TRUE(MatchOracle(deq1, deq2));
+	}
 
-		res << std::endl << "Oracle looks like this:" << std::endl;
-		for (size_t i = 0; i < oracle.size(); ++i) res << oracle[i] << " ";
-		res << "(" << oracle.size() << ")" << std::endl;
+	TEST(MainTestCase, LargeSizeTest)
+	{
+		Deque<int> deq1;
+		std::deque<int> oracle;
 
-		res << "But he deque looks like this:" << std::endl;
-		for (size_t i = 0; i < deq.size(); ++i) res << deq[i] << " ";
-		res << "(" << deq.size() << ")" << std::endl;
+		ASSERT_TRUE(MatchOracle(deq1, oracle));
+		
+		for (int i = 0; i < 1000000; ++i)
+		{
+			deq1.push_back(i);
+			oracle.push_back(i);
+		}
+		
+		ASSERT_TRUE(MatchOracle(deq1, oracle));
 
-		return res;
+		for (int i = 0; i < 1000000; ++i)
+		{
+			deq1.pop_front();
+			oracle.pop_front();
+		}
+		
+		ASSERT_TRUE(MatchOracle(deq1, oracle));
 	}
 
 	std::default_random_engine engine;
 	
 	TEST(MainTestCase, RandomizedDequeTest)
 	{
-		const size_t COUNT = 10000;
+		const size_t COUNT = 100000;
 		const int RANGE = 10000;
 
 		Deque<short> deq;
@@ -158,31 +209,32 @@ namespace
 
 		for (size_t i = 0; i < COUNT; ++i) 
 		{
-			switch (type(engine))
+			OpType op = (OpType) type(engine);
+			switch (op)
 			{
-				case 0:
+				case PushBack:
 					oracle.push_back(value(engine));
 					deq.push_back(oracle.back());
 					break;
 
-				case 1:
+				case PushFront:
 					oracle.push_front(value(engine));
 					deq.push_front(oracle.front());
 					break;
 
-				case 2:
+				case PopBack:
 					if (oracle.empty()) continue;
 					oracle.pop_back();
 					deq.pop_back();
 					break;
 
-				case 3:
+				case PopFront:
 					if (oracle.empty()) continue;
 					oracle.pop_front();
 					deq.pop_front();
 					break;
 
-				case 4:
+				case IndexSet:
 					if (oracle.empty()) continue;
 					std::uniform_int_distribution<int> index(0, deq.size() - 1);
 					size_t ind = index(engine);
