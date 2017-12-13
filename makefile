@@ -35,27 +35,27 @@ gtest_main.a : gtest-all.o gtest_main.o
 
 #################
 
-all_tests: dirs unittests1 stresstest
+all_tests: dirs unittest speedtest
 
-unittests1.o: $(USER_DIR)/unittests1.cpp $(USER_DIR)/deque.hpp $(GTEST_HEADERS)
+unittest.o: $(USER_DIR)/unittest.cpp $(USER_DIR)/deque.hpp $(GTEST_HEADERS)
 	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) \
 		-c $< -o $(OBJ_DIR)/$@
 
-unittests1: unittests1.o gtest_main.a
+unittest: unittest.o gtest_main.a
 	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -lpthread \
 		$(^:%=$(OBJ_DIR)/%) -o $(BIN_DIR)/$@
 
-stresstest.o: $(USER_DIR)/stresstest.cpp $(USER_DIR)/deque.hpp
+speedtest.o: $(USER_DIR)/speedtest.cpp $(USER_DIR)/deque.hpp
 	$(CXX) $(CXXFLAGS) $(RELEASE_FLAGS) \
 		-c $< -o $(OBJ_DIR)/$@
 
-stresstest: stresstest.o
+speedtest: speedtest.o
 	$(CXX) $(CXXFLAGS) $(RELEASE_FLAGS) \
 		$(^:%=$(OBJ_DIR)/%) -o $(BIN_DIR)/$@
 
-profile: dirs stresstest
+profile: dirs speedtest
 	cd $(PROF_DIR);\
-	valgrind --tool=callgrind ./../$(BIN_DIR)/stresstest
+	valgrind --tool=callgrind ./../$(BIN_DIR)/speedtest
 
 yacontest:
 	head -n -3 deque.hpp > deque.h

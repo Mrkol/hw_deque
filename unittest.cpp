@@ -16,8 +16,95 @@ namespace
 		IndexSet
 	};
 
+	struct Operation
+	{
+		OpType type;
+		unsigned long long param1;
+		long long param2;
+	};
+
+	class MainTestCase : public ::testing::Test
+	{
+	protected:
+		std::default_random_engine engine;
+		std::vector<Operation> _testData;
+		const size_t COUNT = 1000;
+		const int RANGE = 10000;
+
+		virtual void SetUp()
+		{
+			std::deque<short> oracle;
+
+			_testData.clear();
+			_testData.reserve(COUNT);
+
+			std::discrete_distribution<int> type({10, 10, 8, 8, 10});
+			std::uniform_int_distribution<int> value(-RANGE, RANGE);
+
+			while (_testData.size() < COUNT)
+			{
+				OpType op = (OpType) type(engine);
+				if (op == PushBack)
+				{
+					int val = value(engine);
+					oracle.push_back(val);
+					_testData.push_back({op, 0, val});
+					continue;					
+				}
+
+				if (op == PushFront)
+				{
+					int val = value(engine);
+					oracle.push_front(val);
+					_testData.push_back({op, 0, val});
+					continue;
+				}
+				
+				if (oracle.empty()) continue;
+				
+				if (op == PopBack)
+				{
+					oracle.pop_back();
+					_testData.push_back({op, 0, 0});
+					continue;
+				}
+				
+				if (op == PopFront)
+				{
+					oracle.pop_front();
+					_testData.push_back({op, 0, 0});
+					continue;
+				}
+
+				if (op == IndexSet)
+				{
+					std::uniform_int_distribution<int> index(0, oracle.size() - 1);
+					size_t ind = index(engine);
+					int val = value(engine);
+					oracle[ind] = val;
+					_testData.push_back({op, ind, val});
+				}
+			}
+		}
+	};
+
+	std::ostream& operator<<(std::ostream& out, 
+		const std::vector<Operation>& ops)
+	{
+		out << "{" << std::endl;
+		for (auto op : ops)
+		{
+			out << "\t";
+			out << "(" << op.type << ", " << op.param1 << ", " << op.param2 << ")";
+			out << std::endl;
+		}
+		out << "}";
+		return out;
+	}
+
+
 	template<class TDeque1, class TDeque2>
-	::testing::AssertionResult MatchOracle(const TDeque1& deq, const TDeque2& oracle)
+	::testing::AssertionResult Matches(const TDeque1& deq, const TDeque2& oracle)
 	{
 		bool success = true;
 		success &= deq.size() == oracle.size();
@@ -45,7 +132,7 @@ namespace
 		return res;
 	}
 
-	TEST(MainTestCase, ManualDequeTest)
+	TEST_F(MainTestCase, ManualDequeTest)
 	{
 		Deque<int> deq;
 		deq.push_back(1);
@@ -75,7 +162,7 @@ namespace
 		EXPECT_EQ(deq[3], -5);
 	}
 
-	TEST(MainTestCase, ManualIteratorTest)
+	TEST_F(MainTestCase, ManualIteratorTest)
 	{
 		Deque<int> deq;
 		deq.push_back(-5);
@@ -140,7 +227,7 @@ namespace
 		EXPECT_EQ(cdeq.crend() - cdeq.crbegin(), cdeq.size());
 	}
 
-	TEST(MainTestCase, PairIteratorTest)
+	TEST_F(MainTestCase, PairIteratorTest)
 	{
 		Deque<std::pair<int, int>> deq;
 		deq.push_back(std::make_pair(0, 1));
@@ -153,7 +240,7 @@ namespace
 		EXPECT_EQ((it + 4)->second, deq[4].second);
 	}
 
-	TEST(MainTestCase, StlIteratorTest)
+	TEST_F(MainTestCase, StlIteratorTest)
 	{
 		Deque<int> deq1;
 		Deque<int> deq2;
@@ -167,15 +254,15 @@ namespace
 		std::random_shuffle(deq1.begin(), deq1.end());
 		std::sort(deq1.begin(), deq1.end());
 
-		ASSERT_TRUE(MatchOracle(deq1, deq2));
+		ASSERT_TRUE(Matches(deq1, deq2));
 	}
 
-	TEST(MainTestCase, LargeSizeTest)
+	TEST_F(MainTestCase, LargeSizeTest)
 	{
 		Deque<int> deq1;
 		std::deque<int> oracle;
 
-		ASSERT_TRUE(MatchOracle(deq1, oracle));
+		ASSERT_TRUE(Matches(deq1, oracle));
 		
 		for (int i = 0; i < 1000000; ++i)
 		{
@@ -183,7 +270,7 @@ namespace
 			oracle.push_back(i);
 		}
 		
-		ASSERT_TRUE(MatchOracle(deq1, oracle));
+		ASSERT_TRUE(Matches(deq1, oracle));
 
 		for (int i = 0; i < 1000000; ++i)
 		{
@@ -191,58 +278,46 @@ namespace
 			oracle.pop_front();
 		}
 		
-		ASSERT_TRUE(MatchOracle(deq1, oracle));
+		ASSERT_TRUE(Matches(deq1, oracle));
 	}
 
 	std::default_random_engine engine;
 	
-	TEST(MainTestCase, RandomizedDequeTest)
+	TEST_F(MainTestCase, RandomizedDequeTest)
 	{
-		const size_t COUNT = 100000;
-		const int RANGE = 10000;
-
 		Deque<short> deq;
 		std::deque<short> oracle;
 
-		std::uniform_int_distribution<int> type(0, 4);
-		std::uniform_int_distribution<int> value(-RANGE, RANGE);
-
-		for (size_t i = 0; i < COUNT; ++i) 
+		for (auto op : _testData) 
 		{
-			OpType op = (OpType) type(engine);
-			switch (op)
+			switch (op.type)
 			{
 				case PushBack:
-					oracle.push_back(value(engine));
-					deq.push_back(oracle.back());
+					oracle.push_back(op.param2);
+					deq.push_back(op.param2);
 					break;
 
 				case PushFront:
-					oracle.push_front(value(engine));
-					deq.push_front(oracle.front());
+					oracle.push_front(op.param2);
+					deq.push_front(op.param2);
 					break;
 
 				case PopBack:
-					if (oracle.empty()) continue;
 					oracle.pop_back();
 					deq.pop_back();
 					break;
 
 				case PopFront:
-					if (oracle.empty()) continue;
 					oracle.pop_front();
 					deq.pop_front();
 					break;
 
 				case IndexSet:
-					if (oracle.empty()) continue;
-					std::uniform_int_distribution<int> index(0, deq.size() - 1);
-					size_t ind = index(engine);
-					oracle[ind] = value(engine);
-					deq[ind] = oracle[ind];
+					oracle[op.param1] = op.param2;
+					deq[op.param1] = op.param2;
 					break;
 			}
-			EXPECT_TRUE(MatchOracle(deq, oracle));
+			ASSERT_TRUE(Matches(deq, oracle)) << _testData;
 		}
 	}
 }
