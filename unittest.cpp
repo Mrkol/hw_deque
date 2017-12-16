@@ -252,6 +252,7 @@ namespace
 		}
 
 		std::random_shuffle(deq1.begin(), deq1.end());
+		ASSERT_FALSE(Matches(deq1, deq2));
 		std::sort(deq1.begin(), deq1.end());
 
 		ASSERT_TRUE(Matches(deq1, deq2));
