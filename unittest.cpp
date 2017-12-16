@@ -28,7 +28,7 @@ namespace
 	protected:
 		std::default_random_engine engine;
 		std::vector<Operation> _testData;
-		const size_t COUNT = 1000;
+		const std::size_t COUNT = 1000;
 		const int RANGE = 10000;
 
 		virtual void SetUp()
@@ -79,7 +79,7 @@ namespace
 				if (op == IndexSet)
 				{
 					std::uniform_int_distribution<int> index(0, oracle.size() - 1);
-					size_t ind = index(engine);
+					std::size_t ind = index(engine);
 					int val = value(engine);
 					oracle[ind] = val;
 					_testData.push_back({op, ind, val});
@@ -112,7 +112,7 @@ namespace
 		if (!oracle.empty()) success &= deq.front() == oracle.front();
 		if (!oracle.empty()) success &= deq.back() == oracle.back();
 
-		for (size_t i = 0; i < oracle.size(); ++i)
+		for (std::size_t i = 0; i < oracle.size(); ++i)
 		{
 			success &= deq[i] == oracle[i];
 		}
@@ -122,11 +122,11 @@ namespace
 		::testing::AssertionResult res = ::testing::AssertionFailure();
 
 		res << std::endl << "Oracle looks like this:" << std::endl;
-		for (size_t i = 0; i < oracle.size(); ++i) res << oracle[i] << " ";
+		for (std::size_t i = 0; i < oracle.size(); ++i) res << oracle[i] << " ";
 		res << "(" << oracle.size() << ")" << std::endl;
 
 		res << "But he deque looks like this:" << std::endl;
-		for (size_t i = 0; i < deq.size(); ++i) res << deq[i] << " ";
+		for (std::size_t i = 0; i < deq.size(); ++i) res << deq[i] << " ";
 		res << "(" << deq.size() << ")" << std::endl;
 
 		return res;
@@ -177,7 +177,7 @@ namespace
 		deq.push_back(4);
 		deq.push_back(5);
 		Deque<int>::iterator it = deq.begin();
-		for (size_t i = 0; i < deq.size(); ++i, ++it)
+		for (std::size_t i = 0; i < deq.size(); ++i, ++it)
 		{
 			EXPECT_EQ(*it, deq[i]);
 		}
@@ -200,14 +200,14 @@ namespace
 		for (auto& el : deq) EXPECT_EQ(el, deq[ind++]);
 
 		Deque<int>::reverse_iterator rit = deq.rbegin();
-		for (size_t i = deq.size() - 1; rit != deq.rend(); --i, ++rit)
+		for (std::size_t i = deq.size() - 1; rit != deq.rend(); --i, ++rit)
 		{
 			EXPECT_EQ(*rit, deq[i]);
 		}
 
 		const Deque<int> cdeq(deq);
 		Deque<int>::const_iterator cit = cdeq.begin();
-		for (size_t i = 0; i < deq.size(); ++i, ++cit)
+		for (std::size_t i = 0; i < deq.size(); ++i, ++cit)
 		{
 			EXPECT_EQ(*cit, cdeq[i]);
 		}
@@ -245,7 +245,7 @@ namespace
 		Deque<int> deq1;
 		Deque<int> deq2;
 
-		for (int i = 0; i < 1000000; ++i)
+		for (std::size_t i = 0; i < COUNT; ++i)
 		{
 			deq1.push_back(i);
 			deq2.push_back(i);
@@ -265,7 +265,7 @@ namespace
 
 		ASSERT_TRUE(Matches(deq1, oracle));
 		
-		for (int i = 0; i < 1000000; ++i)
+		for (std::size_t i = 0; i < COUNT; ++i)
 		{
 			deq1.push_back(i);
 			oracle.push_back(i);
@@ -273,7 +273,7 @@ namespace
 		
 		ASSERT_TRUE(Matches(deq1, oracle));
 
-		for (int i = 0; i < 1000000; ++i)
+		for (std::size_t i = 0; i < COUNT; ++i)
 		{
 			deq1.pop_front();
 			oracle.pop_front();
