@@ -79,6 +79,7 @@ public:
 private:
 	void _normalize();
 	void _resize(size_type);
+	reference _get(difference_type) const;
 
 	T* _impl;
 	size_type _capacity;

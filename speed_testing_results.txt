@@ -1,15 +1,15 @@
 Testing over 100 operations...
-Finished. Average time: 14ms
+Finished. Average time: 29ms
 
 Testing over 1000 operations...
-Finished. Average time: 62ms
+Finished. Average time: 87ms
 
 Testing over 10000 operations...
-Finished. Average time: 437ms
+Finished. Average time: 518ms
 
 Testing over 100000 operations...
-Finished. Average time: 4635ms
+Finished. Average time: 4836ms
 
 Testing over 1000000 operations...
-Finished. Average time: 46090ms
+Finished. Average time: 49669ms
 

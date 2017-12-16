@@ -11,7 +11,7 @@ template<typename T>
 Deque<T>::Deque(const Deque<T>& other)
 	: _impl(new T[other._capacity]), _capacity(other._capacity), _size(other._size), _start(other._start)
 {
-	std::memcpy(_impl, other._impl, _capacity*sizeof(T));
+	std::copy(other._impl, other._impl + other._capacity, _impl);
 }
 
 template<typename T>
@@ -56,19 +56,13 @@ void Deque<T>::reserve(typename Deque<T>::size_type amount)
 template<typename T>
 typename Deque<T>::reference Deque<T>::operator[](Deque<T>::difference_type index)
 {
-	Deque<T>::size_type tmp = _start + index;
-	if (tmp >= _capacity)
-		tmp -= _capacity;
-	return _impl[tmp];
+	return _get(index);
 }
 
 template<typename T>
 typename Deque<T>::const_reference Deque<T>::operator[](Deque<T>::difference_type index) const
 {
-	Deque<T>::size_type tmp = _start + index;
-	if (tmp >= _capacity) 
-		tmp -= _capacity;
-	return _impl[tmp];
+	return _get(index);
 }
 
 template<typename T>
@@ -80,7 +74,7 @@ Deque<T>& Deque<T>::operator=(const Deque<T>& other)
 	if (_impl != nullptr) 
 		delete[] _impl;
 	_impl = new T[_capacity];
-	std::memcpy(_impl, other._impl, _capacity*sizeof(T));
+	std::copy(other._impl, other._impl + other._capacity, _impl);
 	_size = other._size;
 	_start = other._start;
 }
@@ -253,12 +247,16 @@ void Deque<T>::_resize(Deque<T>::size_type capacity)
 	T* tmp = new T[capacity];
 	if (_size <= _capacity - _start)
 	{
-		std::memcpy(tmp, _impl + _start, _size*sizeof(T));
+		std::copy(_impl + _start, _impl + _start + _size, tmp);
+		//std::memcpy(tmp, _impl + _start, _size*sizeof(T));
 	}
 	else
 	{
-		std::memcpy(tmp, _impl + _start, (_capacity - _start)*sizeof(T));
-		std::memcpy(tmp + _capacity - _start, _impl, (_size - (_capacity - _start))*sizeof(T));
+		std::copy(_impl + _start, _impl + _capacity, tmp);
+		//std::memcpy(tmp, _impl + _start, (_capacity - _start)*sizeof(T));
+
+		std::copy(_impl, _impl + _size, tmp + _capacity - _start);
+		//std::memcpy(tmp + _capacity - _start, _impl, (_size - (_capacity - _start))*sizeof(T));
 	}
 
 	std::swap(tmp, _impl);
@@ -266,6 +264,15 @@ void Deque<T>::_resize(Deque<T>::size_type capacity)
 	_capacity = capacity;
 	_start = 0;
 	delete[] tmp;
+}
+
+template<typename T>
+typename Deque<T>::reference Deque<T>::_get(difference_type index) const
+{
+	Deque<T>::size_type tmp = _start + index;
+	if (tmp >= _capacity) 
+		tmp -= _capacity;
+	return _impl[tmp];
 }
 
 // ==================== ITERATORS =======================
