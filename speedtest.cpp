@@ -6,86 +6,10 @@
 #include <random>
 #include <vector>
 #include "deque.hpp"
+#include "testing.hpp"
 
 
-std::default_random_engine engine;
-
-enum OpType
-{
-	PushBack,
-	PushFront,
-	PopBack,
-	PopFront,
-	IndexSet
-};
-
-struct Operation
-{
-	OpType type;
-	unsigned long long param1;
-	long long param2;
-};
-
-
-void Generate(std::vector<Operation>& testData, std::size_t size)
-{
-	const int RANGE = 100000;
-
-	std::deque<short> oracle;
-
-	testData.clear();
-	testData.reserve(size);
-
-	std::discrete_distribution<int> type({10, 10, 6, 6, 10});
-	std::uniform_int_distribution<int> value(-RANGE, RANGE);
-
-	while (testData.size() < size)
-	{
-		OpType op = (OpType) type(engine);
-		if (op == PushBack)
-		{
-			int val = value(engine);
-			oracle.push_back(val);
-			testData.push_back({op, 0, val});
-			continue;					
-		}
-
-		if (op == PushFront)
-		{
-			int val = value(engine);
-			oracle.push_front(val);
-			testData.push_back({op, 0, val});
-			continue;
-		}
-		
-		if (oracle.empty()) continue;
-		
-		if (op == PopBack)
-		{
-			oracle.pop_back();
-			testData.push_back({op, 0, 0});
-			continue;
-		}
-		
-		if (op == PopFront)
-		{
-			oracle.pop_front();
-			testData.push_back({op, 0, 0});
-			continue;
-		}
-
-		if (op == IndexSet)
-		{
-			std::uniform_int_distribution<int> index(0, oracle.size() - 1);
-			size_t ind = index(engine);
-			int val = value(engine);
-			oracle[ind] = val;
-			testData.push_back({op, ind, val});
-		}
-	}
-}
-
-long long SpeedTest(const std::vector<Operation>& testData)
+long long SpeedTest(const TestData& testData)
 {
 	using clock_t = std::chrono::high_resolution_clock;
 	using timepoint_t = std::chrono::time_point<clock_t>;
@@ -131,7 +55,8 @@ long long SpeedTest(const std::vector<Operation>& testData)
 
 int main()
 {
-	long long sizes[] {1000ll, 10000ll, 100000ll, 1000000ll, 10000000ll};
+	std::default_random_engine engine;
+	long long sizes[] {100ll, 1000ll, 10000ll, 100000ll, 1000000ll};
 	for (auto size : sizes)
 	{
 		const size_t AVERAGE_OVER = 10;
@@ -140,8 +65,8 @@ int main()
 		long long average_time = 0;
 		for (size_t i = 0; i < AVERAGE_OVER; ++i)
 		{
-			std::vector<Operation> testData;
-			Generate(testData, size);
+			TestData testData;
+			GenerateTest(testData, size, 10000, engine);
 			average_time += SpeedTest(testData);
 		}
 		average_time /= AVERAGE_OVER;

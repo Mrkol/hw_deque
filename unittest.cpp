@@ -2,106 +2,25 @@
 #include <algorithm>
 #include <random>
 #include "gtest/gtest.h"
+#include "testing.hpp"
 #include "deque.hpp"
 
 
 namespace 
 {
-	enum OpType
-	{
-		PushBack,
-		PushFront,
-		PopBack,
-		PopFront,
-		IndexSet
-	};
-
-	struct Operation
-	{
-		OpType type;
-		unsigned long long param1;
-		long long param2;
-	};
-
 	class MainTestCase : public ::testing::Test
 	{
 	protected:
 		std::default_random_engine engine;
-		std::vector<Operation> _testData;
+		TestData _testData;
 		const std::size_t COUNT = 1000;
 		const int RANGE = 10000;
 
 		virtual void SetUp()
 		{
-			std::deque<short> oracle;
-
-			_testData.clear();
-			_testData.reserve(COUNT);
-
-			std::discrete_distribution<int> type({10, 10, 8, 8, 10});
-			std::uniform_int_distribution<int> value(-RANGE, RANGE);
-
-			while (_testData.size() < COUNT)
-			{
-				OpType op = (OpType) type(engine);
-				if (op == PushBack)
-				{
-					int val = value(engine);
-					oracle.push_back(val);
-					_testData.push_back({op, 0, val});
-					continue;					
-				}
-
-				if (op == PushFront)
-				{
-					int val = value(engine);
-					oracle.push_front(val);
-					_testData.push_back({op, 0, val});
-					continue;
-				}
-				
-				if (oracle.empty()) continue;
-				
-				if (op == PopBack)
-				{
-					oracle.pop_back();
-					_testData.push_back({op, 0, 0});
-					continue;
-				}
-				
-				if (op == PopFront)
-				{
-					oracle.pop_front();
-					_testData.push_back({op, 0, 0});
-					continue;
-				}
-
-				if (op == IndexSet)
-				{
-					std::uniform_int_distribution<int> index(0, oracle.size() - 1);
-					std::size_t ind = index(engine);
-					int val = value(engine);
-					oracle[ind] = val;
-					_testData.push_back({op, ind, val});
-				}
-			}
+			GenerateTest(_testData, COUNT, RANGE, engine);
 		}
 	};
-
-	std::ostream& operator<<(std::ostream& out, 
-		const std::vector<Operation>& ops)
-	{
-		out << "{" << std::endl;
-		for (auto op : ops)
-		{
-			out << "\t";
-			out << "(" << op.type << ", " << op.param1 << ", " << op.param2 << ")";
-			out << std::endl;
-		}
-		out << "}";
-		return out;
-	}
-
 
 	template<class TDeque1, class TDeque2>
 	::testing::AssertionResult Matches(const TDeque1& deq, const TDeque2& oracle)
@@ -318,7 +237,7 @@ namespace
 					deq[op.param1] = op.param2;
 					break;
 			}
-			ASSERT_TRUE(Matches(deq, oracle)) << _testData;
+			ASSERT_TRUE(Matches(deq, oracle)) << _testData;	
 		}
 	}
 }

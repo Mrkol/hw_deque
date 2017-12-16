@@ -36,20 +36,26 @@ gtest_main.a : gtest-all.o gtest_main.o
 #################
 
 all_tests: dirs unittest speedtest
+	./bin/unittest
+	./bin/speedtest > speed_testing_results.txt
 
-unittest.o: $(USER_DIR)/unittest.cpp $(USER_DIR)/deque.hpp $(GTEST_HEADERS)
-	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) \
-		-c $< -o $(OBJ_DIR)/$@
-
-unittest: unittest.o gtest_main.a
-	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -lpthread \
-		$(^:%=$(OBJ_DIR)/%) -o $(BIN_DIR)/$@
-
-speedtest.o: $(USER_DIR)/speedtest.cpp $(USER_DIR)/deque.hpp
+testing.o: $(USER_DIR)/testing.cpp
 	$(CXX) $(CXXFLAGS) $(RELEASE_FLAGS) \
 		-c $< -o $(OBJ_DIR)/$@
 
-speedtest: speedtest.o
+unittest.o: $(USER_DIR)/unittest.cpp $(GTEST_HEADERS)
+	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) \
+		-c $< -o $(OBJ_DIR)/$@
+
+unittest: unittest.o testing.o gtest_main.a
+	$(CXX) $(GTESTFLAGS) $(CXXFLAGS) $(DEBUG_FLAGS) -lpthread \
+		$(^:%=$(OBJ_DIR)/%) -o $(BIN_DIR)/$@
+
+speedtest.o: $(USER_DIR)/speedtest.cpp
+	$(CXX) $(CXXFLAGS) $(RELEASE_FLAGS) \
+		-c $< -o $(OBJ_DIR)/$@
+
+speedtest: speedtest.o testing.o
 	$(CXX) $(CXXFLAGS) $(RELEASE_FLAGS) \
 		$(^:%=$(OBJ_DIR)/%) -o $(BIN_DIR)/$@
 
